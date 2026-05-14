@@ -186,3 +186,48 @@ type OrgMetrics struct {
 	SigningKeysCount  int64 `json:"signing_keys_count,omitempty"`
 	Raw               map[string]any `json:"-"`
 }
+
+// ----- Credentials -----
+
+// Credential represents an API credential (client ID / secret pair).
+// client_secret is only present on create and rotate-secret responses.
+type Credential struct {
+	CredentialsID string `json:"credentials_id,omitempty"`
+	ClientID      string `json:"client_id,omitempty"`
+	ClientSecret  string `json:"client_secret,omitempty"`
+	Name          string `json:"name,omitempty"`
+	Description   string `json:"description,omitempty"`
+	CreatedAt     string `json:"created_at,omitempty"`
+}
+
+// CredentialList is the response from ListCredentials.
+type CredentialList struct {
+	Data []Credential `json:"data"`
+}
+
+// CreateCredentialRequest is the request body for CreateCredential.
+type CreateCredentialRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
+// RotateSecretResponse is the response from RotateCredentialSecret.
+type RotateSecretResponse struct {
+	CredentialsID string `json:"credentials_id,omitempty"`
+	ClientID      string `json:"client_id,omitempty"`
+	ClientSecret  string `json:"client_secret,omitempty"`
+}
+
+// ----- Sandbox -----
+
+// SandboxResetRequest is the optional request body for ResetSandbox.
+type SandboxResetRequest struct {
+	OrgUUID string `json:"org_uuid,omitempty"`
+}
+
+// SandboxResetResponse is the response from ResetSandbox.
+type SandboxResetResponse struct {
+	Reset   bool   `json:"reset"`
+	Message string `json:"message,omitempty"`
+	Raw     map[string]any `json:"-"`
+}
