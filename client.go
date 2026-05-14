@@ -396,5 +396,72 @@ func (c *Client) GetOrgMetrics(ctx context.Context, orgUUID string) (*OrgMetrics
 	return &out, nil
 }
 
+// ----- Credentials -----
+
+// ListCredentials returns all credentials for the authenticated client.
+// GET /credentials
+func (c *Client) ListCredentials(ctx context.Context) (*CredentialList, error) {
+	var out CredentialList
+	if err := c.do(ctx, http.MethodGet, "/credentials", nil, true, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// CreateCredential creates a new API credential.
+// POST /credentials — returns 201 with client_secret included.
+func (c *Client) CreateCredential(ctx context.Context, req CreateCredentialRequest) (*Credential, error) {
+	var out Credential
+	if err := c.do(ctx, http.MethodPost, "/credentials", req, true, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// GetCredential fetches a single credential by ID (no client_secret returned).
+// GET /credentials/:id
+func (c *Client) GetCredential(ctx context.Context, credentialsID string) (*Credential, error) {
+	var out Credential
+	path := "/credentials/" + url.PathEscape(credentialsID)
+	if err := c.do(ctx, http.MethodGet, path, nil, true, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// DeleteCredential deletes a credential by ID.
+// DELETE /credentials/:id — returns 204 with no body.
+func (c *Client) DeleteCredential(ctx context.Context, credentialsID string) error {
+	path := "/credentials/" + url.PathEscape(credentialsID)
+	return c.do(ctx, http.MethodDelete, path, nil, true, nil)
+}
+
+// RotateCredentialSecret rotates the client_secret for a credential.
+// POST /credentials/:id/rotate-secret
+func (c *Client) RotateCredentialSecret(ctx context.Context, credentialsID string) (*RotateSecretResponse, error) {
+	var out RotateSecretResponse
+	path := "/credentials/" + url.PathEscape(credentialsID) + "/rotate-secret"
+	if err := c.do(ctx, http.MethodPost, path, nil, true, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ----- Sandbox -----
+
+// ResetSandbox resets the sandbox environment.
+// POST /api/sandbox/reset — org_uuid is optional.
+func (c *Client) ResetSandbox(ctx context.Context, req *SandboxResetRequest) (*SandboxResetResponse, error) {
+	var body any
+	if req != nil {
+		body = req
+	}
+	var out SandboxResetResponse
+	if err := c.do(ctx, http.MethodPost, "/api/sandbox/reset", body, true, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // ensure strconv stays used (helper for callers building queries).
 var _ = strconv.Itoa
