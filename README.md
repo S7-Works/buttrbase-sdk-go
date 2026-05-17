@@ -211,6 +211,89 @@ valid := buttrbase.VerifyWebhookSignature(
 
 Non-2xx responses return `*ButtrbaseError` with `StatusCode`, `Detail`, and `Body`.
 
+## Recipes
+
+### Complete Onboarding
+
+```go
+client := buttrbase.New("bb_live_...")
+ctx := context.Background()
+
+// 1. Register and login
+_, err := client.Register(ctx, "admin@acme.com", "s3cur3!", "Acme Corp",
+    &buttrbase.RegisterOptions{FirstName: "Alice"})
+login, err := client.Login(ctx, "admin@acme.com", "s3cur3!", "Acme Corp")
+
+// 2. Get profile
+profile, err := client.GetProfile(ctx)
+
+// 3. Create a team and add a member
+team, err := client.CreateTeam(ctx, "org-uuid", map[string]any{"name": "Engineering"})
+_, err = client.AddTeamMember(ctx, "org-uuid", team.UUID, map[string]any{"user_uuid": "colleague-uuid"})
+```
+
+### MFA Enrollment
+
+```go
+// 1. Check MFA status
+status, err := client.MfaStatus(ctx)
+
+// 2. Enroll in TOTP — returns secret + QR URL
+enrollment, err := client.MfaEnroll(ctx, "")
+fmt.Println("Scan this QR:", enrollment.QrCodeURL)
+
+// 3. Activate with code from authenticator app
+_, err = client.MfaActivate(ctx, "123456")
+
+// 4. Generate recovery codes
+codes, err := client.MfaGenerateRecoveryCodes(ctx)
+```
+
+### Checkout Flow
+
+```go
+// 1. Preview pricing
+preview, err := client.PricingPreview(ctx, map[string]any{"plan": "pro", "seats": 10})
+
+// 2. Check entitlement
+check, err := client.CheckEntitlement(ctx, map[string]any{
+    "feature_name": "advanced-analytics", "org_uuid": "org-uuid",
+})
+
+// 3. Create checkout session
+session, err := client.PricingCheckoutSession(ctx, map[string]any{"plan": "pro", "seats": 10})
+```
+
+### SSO Setup
+
+```go
+// 1. Create an OIDC connection
+conn, err := client.CreateSsoConnection(ctx, "org-uuid", map[string]any{
+    "provider": "okta", "name": "Okta SSO",
+})
+
+// 2. Get the authorize URL
+url, err := client.OidcAuthorizeURL(ctx, conn.ConnectionUUID)
+
+// 3. Handle callback
+resp, err := client.OidcCallback(ctx, conn.ConnectionUUID, map[string]any{"code": "auth-code"})
+```
+
+### Secrets & Key Management
+
+```go
+// 1. Store a secret
+_, err := client.PutSecret(ctx, "org-uuid", "DATABASE_URL", "postgres://...", "DB connection")
+
+// 2. List and retrieve secrets
+secrets, err := client.ListSecrets(ctx, "org-uuid")
+secret, err := client.GetSecret(ctx, "org-uuid", "DATABASE_URL")
+
+// 3. Rotate signing keys — create new, revoke old
+newKey, err := client.CreateSigningKey(ctx, "org-uuid", map[string]any{"algorithm": "ES256"})
+audit, err := client.ListSigningKeys(ctx, "org-uuid")
+```
+
 ## Docs
 
 See https://buttrbase.com/docs for the full API reference.
